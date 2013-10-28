@@ -39,7 +39,7 @@ def get_user_data(file_path, format_dict):
     ''' Read file and format with the dict then b64 encode'''
     with open(file_path) as script:
         script = script.read() % format_dict
-    base64.b64encode(script)
+    return script
 
 
 def get_cores(client,flavor):
@@ -56,7 +56,9 @@ def launch_instances(client, clientinfo, cluster_id, n_compute_nodes, cores,
                                         {"username": clientinfo["username"],
                                          "password": clientinfo["password"],
                                          "auth_url": clientinfo["auth_url"],
+                                         "auth_token": client.client.auth_token,
                                          "cluster_id": cluster_id, "nodes": n_compute_nodes,
+                                         "compute_url": client.client.management_url,
                                          "headnode_script": HEADNODE_SCRIPT,
                                          "pdc": "False", # presumably this can be determined from the auth url?
                                          "cores": cores})
@@ -76,9 +78,9 @@ def launch_instances(client, clientinfo, cluster_id, n_compute_nodes, cores,
     # make compute node user data
     compute_node_user_data = get_user_data("/glusterfs/users/jporter/supernova/torque-node.sh",
                                            {"username": clientinfo["username"],
-                                           "node_script": COMPUTE_NODE_SCRIPT,
-                                           "pdc":"false",
-                                           "cluster_id": cluster_id})
+                                            "node_script": COMPUTE_NODE_SCRIPT,
+                                            "pdc":"false",
+                                            "cluster_id": cluster_id})
 
     # launch the compute nodes
     # try:

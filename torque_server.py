@@ -5,33 +5,33 @@ import json
 import os
 import sys
 import time
-from novaclient import client as nc
+import urllib2
 
 VERION = "1.1"
 
 username = "%(username)s"
-password = "%(password)s"
-auth_url = "%(auth_url)s"
-
-client = nc.Client(VERSION,username,password,username,auth_url,service_type="compute")
-
+auth_token = "%(auth_token)s"
+compute_url = "%(compute_url)s"
 cluster_id = "%(cluster_id)s"
 
-if %(pdc)s and getpass.getuser() != username:
+if False and getpass.getuser() != username:
     sys.exit(1)
 
-# wait for gluster to come up
-while not os.path.exists("/glusterfs/"):
+# wait for torque dir
+while not os.path.exists("/cloudconf/torque/setup_scripts"):
     time.wait(1)
+
+req = urllib2.Request(compute_url + "/servers/detail",headers={"x-auth-project-d": username, "x-auth-token": auth_token})
+resp = urllib2.urlopen(req)
+
+servers = [i for i in json.loads(resp.read())["servers"]
+           if i["name"] == "torque-node-" + cluster_id]
 
 ips = ""
 
-servers = [i for i in nc.servers.list()
-           if i.name == "torque-node-" + cluster_id]
-
 for i in servers:
     try:
-        ips = " ".join([ips, i.addresses["private"][0]["addr"]])
+        ips = " ".join([ips, i["addresses"]["private"][0]["addr"]])
     except KeyError:
         pass
 
