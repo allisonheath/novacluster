@@ -27,7 +27,15 @@ echo '$loglevel 4' >> $CONF_FILE
 echo '/etc/local/lib/' > $TORQ_CONF_FILE
 
 # Using a security flaw here w e will need to change this
-#sudo /tmp/setup_nodes.sh
-#sudo /glusterfs/users/torque_nodes/headnode/tukey_node.sh
-echo "test" > /tmp/worked
 sudo %(node_script)s
+
+# run custom user script
+user_script="%(user_script)s"
+if [ user_script != None ]
+then
+    echo "user_script" | base64 --decode > /tmp/user_script
+    sudo chmod a+x /tmp/user_script
+    sudo /tmp/user_script
+fi
+
+echo "test" > /tmp/worked

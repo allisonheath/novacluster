@@ -1,0 +1,10 @@
+sullivan:
+  compute_image: a0b3f4fd-6b26-42f0-ba9c-aa51ba365fe1
+  head_image: 43ad2a59-83bb-45c9-87e7-910f924f1ca7
+pdc:
+  compute_image: b6ae416d-b822-4d3b-81cd-da8aeff5500a
+  head_image: c6a9a489-0e8b-47f8-859e-4e1d69f86953
+
+# bcbio:
+#   compute_image:
+#   head_image:

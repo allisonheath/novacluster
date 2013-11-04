@@ -6,6 +6,7 @@ import os
 import sys
 import time
 import urllib2
+import base64
 
 VERION = "1.1"
 
@@ -35,9 +36,14 @@ for i in servers:
     except KeyError:
         pass
 
-ips = '"' + ips + '"'
+ips = ips
 
 
 os.system(" ".join(["sudo", "%(headnode_script)s", cluster_id, ips, "%(cores)s"]))
+
+# run user script
+os.system(" ".join["echo", base64.b64decode("%(user_script)s"), ">", "/tmp/user_script"])
+os.system(" ".join["chmod", "u+x", "/tmp/user_script"])
+os.system("/tmp/user_script")
 
 os.system("echo ran /tmp/worked")
