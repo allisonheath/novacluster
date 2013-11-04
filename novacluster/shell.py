@@ -3,7 +3,7 @@ import novacluster as nc
 import os
 import yaml
 
-BUILTIN_FLAVORS = os.path.dirname(__file__) + "/builtin-flavors.yaml"
+BUILTIN_THEMES = os.path.dirname(__file__) + "/builtin-themes.yaml"
 
 # map from auth_urls to cloud names
 # we use this to determine which cloud the user is targeting
@@ -14,11 +14,11 @@ CLOUD_MAP = {"http://cloud-controller:5000/v2.0/": "pdc",
              "http://127.0.0.2:5100/v2.0": "pdc"}
 
 
-def _get_cluster_flavor(name):
-    flavor = yaml.load(open(BUILTIN_FLAVORS)).get(name)
-    if flavor is None:
-        raise KeyError("Flavor name not recognized")
-    return flavor
+def _get_cluster_theme(name):
+    theme = yaml.load(open(BUILTIN_THEMES)).get(name)
+    if theme is None:
+        raise KeyError("Theme name not recognized")
+    return theme
 
 
 def get_from_env(key):
@@ -28,8 +28,6 @@ def get_from_env(key):
         return os.environ[key]
     except:
         raise KeyError("Environment not configured properly.")
-
-
 
 # ye olde argparse incantations
 parser = argparse.ArgumentParser(description="wrapper around novaclient for"
@@ -57,20 +55,17 @@ def main():
         "auth_url": get_from_env("OS_AUTH_URL")
     }
 
-
-
-    # determine cloud and cluster flavor
+    # determine cloud and cluster theme
     cloud = CLOUD_MAP.get(clientinfo["auth_url"])
     if cloud is None:
         raise RuntimeError("Your environments Openstack Auth URL"
                            "is not known to correspond to any OSDC"
                            "system. Please make sure your environment"
                            "is configured correctly.")
-        exit(1)
-    # for now just launch the cloud's default flavor
-    cluster_flavor = _get_cluster_flavor(cloud)
+    # for now just launch the cloud's default theme
+    cluster_theme = _get_cluster_theme(cloud)
 
     # for now just try to launch a cluster
     if args.subcommand == "launch":
-        nc.cluster_launch(clientinfo, args.number, cluster_flavor,
+        nc.cluster_launch(clientinfo, args.number, cluster_theme,
                           args.flavor, key_name=args.key)
