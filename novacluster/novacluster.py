@@ -82,15 +82,15 @@ def launch_instances(client, clientinfo, cluster_id, n_compute_nodes, cores,
 
     print cluster_flavor
     # launch the headnode
-    # try:
-    headnode = client.servers.create("torque-headnode-{0}".format(cluster_id),
-                                     client.images.get(cluster_flavor["head_image"]),
-                                     client.flavors.get(1), # should be tiny
-                                     userdata=headnode_user_data,
-                                     key_name=key_name,
-                                     security_groups=["default"])
-    # except:
-    #     raise RuntimeError("Failed to create headnode, bailing . . .")
+    try:
+        headnode = client.servers.create("torque-headnode-{0}".format(cluster_id),
+                                         client.images.get(cluster_flavor["head_image"]),
+                                         client.flavors.get(1), # should be tiny
+                                         userdata=headnode_user_data,
+                                         key_name=key_name,
+                                         security_groups=["default"])
+    except:
+        raise RuntimeError("Failed to create headnode, bailing . . .")
 
     # make compute node user data
     compute_node_user_data = get_user_data(_get_package_script("torque-node.sh"),
