@@ -144,21 +144,3 @@ def cluster_launch(clientinfo, n_compute_nodes, cluster_flavor,
     # launch the instances
     launch_instances(client, clientinfo, cluster_id, n_compute_nodes, cores,
                      cluster_flavor, node_flavor, key_name)
-
-
-if __name__ == "__main__":
-    # make a new novaclient
-    clientinfo = {
-        "username": get_from_env("OS_USERNAME"),
-        "password": get_from_env("OS_PASSWORD"),
-        "auth_url": get_from_env("OS_AUTH_URL")
-    }
-    client = nc.Client(VERSION,
-                       clientinfo["username"],
-                       clientinfo["password"],
-                       clientinfo["username"],
-                       clientinfo["auth_url"],
-                       service_type="compute")
-
-    # for now just try to launch a cluster
-    cluster_launch(client, clientinfo, 3, None, 3)
