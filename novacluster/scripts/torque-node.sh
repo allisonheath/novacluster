@@ -26,16 +26,26 @@ echo '$loglevel 4' >> $CONF_FILE
 
 echo '/etc/local/lib/' > $TORQ_CONF_FILE
 
-# Using a security flaw here w e will need to change this
-sudo %(node_script)s
-
-# run custom user script
-user_script="%(user_script)s"
-if [ user_script != None ]
+# put keys in place
+if ! %(pdc)s
 then
-    echo "user_script" | base64 --decode > /tmp/user_script
-    sudo chmod a+x /tmp/user_script
-    sudo /tmp/user_script
+    echo "Host torque-headnode-$CLUSTER_ID*" >> /home/ubuntu/.ssh/config
+    echo "    StrictHostKeyChecking no" >> /home/ubuntu/.ssh/config
+    echo "    UserKnownHostsFile=/dev/null" >> /home/ubuntu/.ssh/config
+    echo %(public_key)s >> /home/ubuntu/.ssh/authorized_keys
+    echo "%(private_key)s" > /home/ubuntu/.ssh/id_dsa
+    chown ubuntu:ubuntu /home/ubuntu/.ssh/id_dsa
+    chmod 600 /home/ubuntu/.ssh/id_dsa
 fi
 
+# run custom user script
+# user_script="%(user_script)s"
+# if [ user_script != None ]
+# then
+#     echo "user_script" | base64 --decode > /tmp/user_script
+#     sudo chmod a+x /tmp/user_script
+#     sudo /tmp/user_script
+# fi
+
+sudo %(node_script)s
 echo "test" > /tmp/worked

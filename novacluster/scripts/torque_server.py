@@ -36,14 +36,21 @@ for i in servers:
     except KeyError:
         pass
 
-ips = ips
+ips = '"' + ips + '"'
 
+# do ssh key stuff
+if not %(pdc)s:
+    os.system("echo %(public_key)s >> /home/ubuntu/.ssh/authorized_keys")
+    os.system("""echo "%(private_key)s" >> /home/ubuntu/.ssh/id_dsa""")
+    os.system("chown ubuntu:ubuntu /home/ubuntu/.ssh/id_dsa")
+    os.system("chmod 600 /home/ubuntu/.ssh/id_dsa")
 
+# run headnode script
 os.system(" ".join(["sudo", "%(headnode_script)s", cluster_id, ips, "%(cores)s"]))
 
 # run user script
-os.system(" ".join["echo", base64.b64decode("%(user_script)s"), ">", "/tmp/user_script"])
-os.system(" ".join["chmod", "u+x", "/tmp/user_script"])
-os.system("/tmp/user_script")
+# os.system(" ".join["echo", base64.b64decode("%(user_script)s"), ">", "/tmp/user_script"])
+# os.system(" ".join["chmod", "u+x", "/tmp/user_script"])
+# os.system("/tmp/user_script")
 
-os.system("echo ran /tmp/worked")
+os.system("echo ran > /tmp/worked")
