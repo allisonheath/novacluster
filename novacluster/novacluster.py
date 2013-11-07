@@ -63,7 +63,7 @@ def launch_instances(client, clientinfo, cluster_id, n_compute_nodes, cores,
     try:
         headnode = client.servers.create("torque-headnode-{0}".format(cluster_id),
                                          client.images.get(cluster_theme["head_image"]),
-                                         client.flavors.get(1), # should be tiny
+                                         client.flavors.get(3),  # should be medium
                                          userdata=headnode_user_data,
                                          key_name=key_name,
                                          security_groups=["default"])

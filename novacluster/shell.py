@@ -44,7 +44,9 @@ launch_parser.add_argument("--key", type=str,
 launch_parser.add_argument("--flavor", type=int,
                            help="the flavor ID to use for"
                                 "the compute nodes")
-
+launch_parser.add_argument("--theme", type=str,
+                           help="name of a cluster theme"
+                           "to use for this cluster.")
 
 def main():
     args = parser.parse_args()
@@ -63,7 +65,10 @@ def main():
                            "system. Please make sure your environment"
                            "is configured correctly.")
     # for now just launch the cloud's default theme
-    cluster_theme = _get_cluster_theme(cloud)
+    if args.theme is None:
+        cluster_theme = _get_cluster_theme(cloud)
+    else:
+        cluster_theme = _get_cluster_theme(args.theme)
 
     # for now just try to launch a cluster
     if args.subcommand == "launch":
