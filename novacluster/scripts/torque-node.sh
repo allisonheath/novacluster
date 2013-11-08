@@ -38,14 +38,18 @@ then
     chmod 600 /home/ubuntu/.ssh/id_dsa
 fi
 
-# run custom user script
-# user_script="%(user_script)s"
-# if [ user_script != None ]
-# then
-#     echo "user_script" | base64 --decode > /tmp/user_script
-#     sudo chmod a+x /tmp/user_script
-#     sudo /tmp/user_script
-# fi
-
+# run node scripts
 sudo %(node_script)s
-echo "test" > /tmp/worked
+
+echo "node script" > /tmp/worked
+
+# run custom user script
+user_script=`echo "%(user_script)s" | base64 --decode`
+if [[ $user_script != None ]]
+then
+    echo $user_script > /tmp/user_script
+    sudo chmod a+x /tmp/user_script
+    sudo /tmp/user_script
+fi
+
+echo "user script" > /tmp/worked

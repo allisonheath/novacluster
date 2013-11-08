@@ -7,5 +7,5 @@ pdc:
 bcbio:
   head_image: d6ce1f29-865d-44c7-91c3-ffd726c59d6b
   compute-image: 1033dc62-38f7-4820-8f6f-e85149f19cb6
-  head_script: /Users/james/random_hacking/rory_ipython.sh
-  compute_script: /Users/james/random_hacking/rory_ipython.sh
+  head_script: /Users/james/osdc/novacluster/fixzmq.sh
+  compute_script: /Users/james/osdc/novacluster/fixzmq.sh

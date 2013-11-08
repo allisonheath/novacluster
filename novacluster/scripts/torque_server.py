@@ -48,9 +48,20 @@ if not %(pdc)s:
 # run headnode script
 os.system(" ".join(["sudo", "%(headnode_script)s", cluster_id, ips, "%(cores)s"]))
 
-# run user script
-# os.system(" ".join["echo", base64.b64decode("%(user_script)s"), ">", "/tmp/user_script"])
-# os.system(" ".join["chmod", "u+x", "/tmp/user_script"])
-# os.system("/tmp/user_script")
+os.system("echo headnode script > /tmp/worked")
 
-os.system("echo ran > /tmp/worked")
+# run user script
+# this is disgusting, but for some reason it wouldn't work
+# using python's base64 decode module
+os.popen("""
+bash -c '
+user_script=`echo "%(user_script)s" | base64 --decode`
+if [[ $user_script != None ]]
+then
+    echo $user_script > /tmp/user_script
+    sudo chmod a+x /tmp/user_script
+    sudo /tmp/user_script
+fi'
+""")
+
+os.system("echo user script >> /tmp/worked")

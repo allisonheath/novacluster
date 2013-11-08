@@ -4,6 +4,7 @@ import sys
 import datetime
 import os
 import tempfile
+import base64
 from M2Crypto import DSA, BIO
 from subprocess import Popen, PIPE
 
@@ -20,7 +21,6 @@ def get_user_data(file_path, format_dict):
     with open(file_path) as script:
         script = script.read() % format_dict
     return script
-
 
 def get_cores(client, flavor):
     """Use the novaclient to get the cores for a given flavor."""
@@ -41,7 +41,7 @@ def _get_cluster_theme_scripts(theme):
     compute_script = theme.get("compute_script")
     head_script = open(head_script).read() if head_script else None
     compute_script = open(compute_script).read() if compute_script else None
-    return head_script, compute_script
+    return base64.b64encode(head_script), base64.b64encode(compute_script)
 
 
 def run_ssh_on_string(command, string):
@@ -84,6 +84,7 @@ def launch_instances(client, clientinfo, cluster_id, n_compute_nodes, cores,
     """Launch tiny headnode and compute nodes for a new cluster"""
 
     head_user_script, compute_user_script = _get_cluster_theme_scripts(cluster_theme)
+    print head_user_script, compute_user_script
     public_key, private_key = generate_keypair()
 
     # make headnode user data
