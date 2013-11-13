@@ -39,8 +39,8 @@ def _get_cluster_theme_scripts(theme):
     a cluster has no such script."""
     head_script = theme.get("head_script")
     compute_script = theme.get("compute_script")
-    head_script = open(head_script).read() if head_script else None
-    compute_script = open(compute_script).read() if compute_script else None
+    head_script = open(head_script).read() if head_script else "None"
+    compute_script = open(compute_script).read() if compute_script else "None"
     return base64.b64encode(head_script), base64.b64encode(compute_script)
 
 

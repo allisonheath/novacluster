@@ -1,11 +1,13 @@
 sullivan:
-  compute_image: a0b3f4fd-6b26-42f0-ba9c-aa51ba365fe1
-  head_image: 43ad2a59-83bb-45c9-87e7-910f924f1ca7
+  default:
+    compute_image: a0b3f4fd-6b26-42f0-ba9c-aa51ba365fe1
+    head_image: 43ad2a59-83bb-45c9-87e7-910f924f1ca7
+  bcbio:
+    head_image: 1790c860-210c-4864-b75b-35e35bb3e5cb
+    compute_image: 27c20e4b-19fe-46f1-a625-a1facea4497e
+    head_script: /Users/james/osdc/hg19-symlink.sh
+    compute_script: /Users/james/osdc/hg19-symlink.sh
 pdc:
-  compute_image: b6ae416d-b822-4d3b-81cd-da8aeff5500a
-  head_image: c6a9a489-0e8b-47f8-859e-4e1d69f86953
-bcbio:
-  head_image: d6ce1f29-865d-44c7-91c3-ffd726c59d6b
-  compute-image: 1033dc62-38f7-4820-8f6f-e85149f19cb6
-  head_script: /Users/james/random_hacking/rory_ipython.sh
-  compute_script: /Users/james/random_hacking/rory_ipython.sh
+  default:
+    compute_image: b6ae416d-b822-4d3b-81cd-da8aeff5500a
+    head_image: c6a9a489-0e8b-47f8-859e-4e1d69f86953

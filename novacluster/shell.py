@@ -14,8 +14,9 @@ CLOUD_MAP = {"http://cloud-controller:5000/v2.0/": "pdc",
              "http://127.0.0.2:5100/v2.0": "pdc"}
 
 
-def _get_cluster_theme(name):
-    theme = yaml.load(open(BUILTIN_THEMES)).get(name)
+def _get_cluster_theme(cloud, theme_name):
+    themes = yaml.load(open(BUILTIN_THEMES))
+    theme = themes[cloud].get(theme_name)
     if theme is None:
         raise KeyError("Theme name not recognized")
     return theme
@@ -50,7 +51,6 @@ launch_parser.add_argument("--theme", type=str,
 
 def main():
     args = parser.parse_args()
-    # print args
     clientinfo = {
         "username": get_from_env("OS_USERNAME"),
         "password": get_from_env("OS_PASSWORD"),
@@ -66,9 +66,9 @@ def main():
                            "is configured correctly.")
     # for now just launch the cloud's default theme
     if args.theme is None:
-        cluster_theme = _get_cluster_theme(cloud)
+        cluster_theme = _get_cluster_theme(cloud, "default")
     else:
-        cluster_theme = _get_cluster_theme(args.theme)
+        cluster_theme = _get_cluster_theme(cloud, args.theme)
 
     # for now just try to launch a cluster
     if args.subcommand == "launch":
