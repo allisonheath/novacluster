@@ -22,7 +22,7 @@ def _get_cluster_theme(cloud, theme_name):
     return theme
 
 
-def get_from_env(key):
+def _get_from_env(key):
     """Attempt to get a key from the environment, throwing an error if
     the key does not exist"""
     try:
@@ -51,10 +51,12 @@ launch_parser.add_argument("--theme", type=str,
 
 def main():
     args = parser.parse_args()
+
     clientinfo = {
-        "username": get_from_env("OS_USERNAME"),
-        "password": get_from_env("OS_PASSWORD"),
-        "auth_url": get_from_env("OS_AUTH_URL")
+        "username": _get_from_env("OS_USERNAME"),
+        "password": _get_from_env("OS_PASSWORD"),
+        "auth_url": _get_from_env("OS_AUTH_URL"),
+        "tenant_name": _get_from_env("OS_TENANT_NAME")
     }
 
     # determine cloud and cluster theme
@@ -64,7 +66,7 @@ def main():
                            "is not known to correspond to any OSDC"
                            "system. Please make sure your environment"
                            "is configured correctly.")
-    # for now just launch the cloud's default theme
+
     if args.theme is None:
         cluster_theme = _get_cluster_theme(cloud, "default")
     else:

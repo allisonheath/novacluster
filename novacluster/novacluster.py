@@ -22,6 +22,7 @@ def get_user_data(file_path, format_dict):
         script = script.read() % format_dict
     return script
 
+
 def get_cores(client, flavor):
     """Use the novaclient to get the cores for a given flavor."""
     return client.flavors.get(flavor).vcpus
@@ -84,7 +85,6 @@ def launch_instances(client, clientinfo, cluster_id, n_compute_nodes, cores,
     """Launch tiny headnode and compute nodes for a new cluster"""
 
     head_user_script, compute_user_script = _get_cluster_theme_scripts(cluster_theme)
-    print head_user_script, compute_user_script
     public_key, private_key = generate_keypair()
 
     # make headnode user data
@@ -151,7 +151,7 @@ def cluster_launch(clientinfo, n_compute_nodes, cluster_theme,
     client = nc.Client(VERSION,
                        clientinfo["username"],
                        clientinfo["password"],
-                       clientinfo["username"],
+                       clientinfo["tenant_name"],
                        clientinfo["auth_url"],
                        service_type="compute")
 
