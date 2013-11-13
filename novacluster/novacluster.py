@@ -16,21 +16,21 @@ COMPUTE_NODE_SCRIPT = "/cloudconf/torque/tukey_node.sh"
 SSH_KEYGEN_COMMAND = "ssh-keygen"
 
 
-def get_user_data(file_path, format_dict):
+def _get_user_data(file_path, format_dict):
     ''' Read file and format with format_dict'''
     with open(file_path) as script:
         script = script.read() % format_dict
     return script
 
 
-def generate_id():
+def _generate_id():
     """Generate an id for a new cluster."""
     rand_base = "0000000%s" % random.randrange(sys.maxint)
     date = datetime.datetime.now()
     return "%s-%s" % (rand_base[-8:], date.strftime("%m-%d-%y"))
 
 
-def get_cores(client, flavor):
+def _get_cores(client, flavor):
     """Use the novaclient to get the cores for a given flavor."""
     return client.flavors.get(flavor).vcpus
 
@@ -52,7 +52,7 @@ def _get_cluster_theme_scripts(theme):
     return base64.b64encode(head_script), base64.b64encode(compute_script)
 
 
-def run_ssh_on_string(command, string):
+def _run_ssh_on_string(command, string):
     temp = tempfile.NamedTemporaryFile(delete=False)
     temp.write(string)
     temp.close()
@@ -66,7 +66,7 @@ def run_ssh_on_string(command, string):
     return output
 
 
-def generate_keypair(password=None):
+def _generate_keypair(password=None):
     dsa = DSA.gen_params(1024, os.urandom)
 
     mem_pub = BIO.MemoryBuffer()
@@ -82,7 +82,7 @@ def generate_keypair(password=None):
 
     dsa.save_pub_key_bio(mem_pub)
 
-    public_key = run_ssh_on_string(SSH_KEYGEN_COMMAND + " -f %s -i -m PKCS8",
+    public_key = _run_ssh_on_string(SSH_KEYGEN_COMMAND + " -f %s -i -m PKCS8",
                                    mem_pub.getvalue())[:-1]
     return {"public": public_key, "private": private_key}
 
@@ -90,7 +90,7 @@ def generate_keypair(password=None):
 def launch_headnode(client, clientinfo, cluster_id, n_compute_nodes,
                     cluster_theme, os_key_name, user_script, ssh_keys, cores):
     # make headnode user data
-    headnode_user_data = get_user_data(
+    headnode_user_data = _get_user_data(
         _get_package_script("torque_server.py"),
         {"username": clientinfo["username"],
          "password": clientinfo["password"],
@@ -118,7 +118,7 @@ def launch_compute_nodes(client, clientinfo, cluster_id, n_compute_nodes,
                          cluster_theme, os_key_name, user_script, ssh_keys,
                          node_flavor):
     # make compute node user data
-    compute_node_user_data = get_user_data(
+    compute_node_user_data = _get_user_data(
         _get_package_script("torque-node.sh"),
         {"username": clientinfo["username"],
          "node_script": COMPUTE_NODE_SCRIPT,
@@ -145,7 +145,7 @@ def launch_instances(client, clientinfo, cluster_id, n_compute_nodes, cores,
     """Launch medium headnode and compute nodes for a new cluster"""
 
     head_user_script, compute_user_script = _get_cluster_theme_scripts(cluster_theme)
-    ssh_keys = generate_keypair()
+    ssh_keys = _generate_keypair()
     # launch the headnode
     try:
         headnode = launch_headnode(client, clientinfo, cluster_id,
@@ -181,9 +181,9 @@ def cluster_launch(clientinfo, n_compute_nodes, cluster_theme,
                        clientinfo["auth_url"],
                        service_type="compute")
 
-    cores = get_cores(client, node_flavor)
+    cores = _get_cores(client, node_flavor)
 
-    cluster_id = generate_id()
+    cluster_id = _generate_id()
 
     # launch the instances
     launch_instances(client, clientinfo, cluster_id, n_compute_nodes, cores,
