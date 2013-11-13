@@ -147,13 +147,13 @@ def launch_instances(client, clientinfo, cluster_id, n_compute_nodes, cores,
     head_user_script, compute_user_script = _get_cluster_theme_scripts(cluster_theme)
     ssh_keys = generate_keypair()
     # launch the headnode
-    # try:
-    headnode = launch_headnode(client, clientinfo, cluster_id,
-                               n_compute_nodes, cluster_theme,
-                               os_key_name, head_user_script,
-                               ssh_keys, cores)
-    # except:
-    #     raise RuntimeError("Failed to create headnode, bailing . . .")
+    try:
+        headnode = launch_headnode(client, clientinfo, cluster_id,
+                                   n_compute_nodes, cluster_theme,
+                                   os_key_name, head_user_script,
+                                   ssh_keys, cores)
+    except:
+        raise RuntimeError("Failed to create headnode, bailing . . .")
 
     try:
         launch_compute_nodes(client, clientinfo, cluster_id,
