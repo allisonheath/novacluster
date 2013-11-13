@@ -23,6 +23,13 @@ def get_user_data(file_path, format_dict):
     return script
 
 
+def generate_id():
+    """Generate an id for a new cluster."""
+    rand_base = "0000000%s" % random.randrange(sys.maxint)
+    date = datetime.datetime.now()
+    return "%s-%s" % (rand_base[-8:], date.strftime("%m-%d-%y"))
+
+
 def get_cores(client, flavor):
     """Use the novaclient to get the cores for a given flavor."""
     return client.flavors.get(flavor).vcpus
@@ -35,9 +42,9 @@ def _get_package_script(script_name):
 
 
 def _get_cluster_theme_scripts(theme):
-    """Return a tuple of the head node and compute node
-    scripts for a given cluster theme. Returns None if
-    a cluster has no such script."""
+    """Return a tuple of the base64encoded head node and compute node
+    scripts for a given cluster theme. Returns None if a cluster has
+    no such script."""
     head_script = theme.get("head_script")
     compute_script = theme.get("compute_script")
     head_script = open(head_script).read() if head_script else "None"
@@ -77,65 +84,84 @@ def generate_keypair(password=None):
 
     public_key = run_ssh_on_string(SSH_KEYGEN_COMMAND + " -f %s -i -m PKCS8",
                                    mem_pub.getvalue())[:-1]
-    return public_key, private_key
+    return {"public": public_key, "private": private_key}
+
+
+def launch_headnode(client, clientinfo, cluster_id, n_compute_nodes,
+                    cluster_theme, os_key_name, user_script, ssh_keys, cores):
+    # make headnode user data
+    headnode_user_data = get_user_data(
+        _get_package_script("torque_server.py"),
+        {"username": clientinfo["username"],
+         "password": clientinfo["password"],
+         "auth_url": clientinfo["auth_url"],
+         "auth_token": client.client.auth_token,
+         "cluster_id": cluster_id, "nodes": n_compute_nodes,
+         "compute_url": client.client.management_url,
+         "headnode_script": HEADNODE_SCRIPT,
+         "pdc": "False",  # presumably this can be determined from the authurl?
+         "cores": cores,
+         "user_script": user_script,
+         "public_key": ssh_keys["public"],
+         "private_key": ssh_keys["private"]})
+
+    return client.servers.create(
+        "torque-headnode-{0}".format(cluster_id),
+        client.images.get(cluster_theme["head_image"]),
+        client.flavors.get(3),  # should be medium
+        userdata=headnode_user_data,
+        key_name=os_key_name,
+        security_groups=["default"])
+
+
+def launch_compute_nodes(client, clientinfo, cluster_id, n_compute_nodes,
+                         cluster_theme, os_key_name, user_script, ssh_keys,
+                         node_flavor):
+    # make compute node user data
+    compute_node_user_data = get_user_data(
+        _get_package_script("torque-node.sh"),
+        {"username": clientinfo["username"],
+         "node_script": COMPUTE_NODE_SCRIPT,
+         "pdc": "false",
+         "cluster_id": cluster_id,
+         "user_script": user_script,
+         "public_key": ssh_keys["public"],
+         "private_key": ssh_keys["private"]})
+
+    # launch the compute nodes
+    return client.servers.create(
+        "torque-node-{0}".format(cluster_id),
+        client.images.get(cluster_theme["head_image"]),
+        client.flavors.get(node_flavor),
+        userdata=compute_node_user_data,
+        min_count=n_compute_nodes,
+        max_count=n_compute_nodes,
+        key_name=os_key_name,
+        security_groups=["default"])
 
 
 def launch_instances(client, clientinfo, cluster_id, n_compute_nodes, cores,
-                     cluster_theme, node_flavor, key_name):
-    """Launch tiny headnode and compute nodes for a new cluster"""
+                     cluster_theme, node_flavor, os_key_name):
+    """Launch medium headnode and compute nodes for a new cluster"""
 
     head_user_script, compute_user_script = _get_cluster_theme_scripts(cluster_theme)
-    public_key, private_key = generate_keypair()
-
-    # make headnode user data
-    headnode_user_data = get_user_data(_get_package_script("torque_server.py"),
-                                       {"username": clientinfo["username"],
-                                        "password": clientinfo["password"],
-                                        "auth_url": clientinfo["auth_url"],
-                                        "auth_token": client.client.auth_token,
-                                        "cluster_id": cluster_id, "nodes": n_compute_nodes,
-                                        "compute_url": client.client.management_url,
-                                        "headnode_script": HEADNODE_SCRIPT,
-                                        "pdc": "False",  # presumably this can be determined from the auth url?
-                                        "cores": cores,
-                                        "user_script": head_user_script,
-                                        "public_key": public_key,
-                                        "private_key": private_key})
-
+    ssh_keys = generate_keypair()
     # launch the headnode
+    # try:
+    headnode = launch_headnode(client, clientinfo, cluster_id,
+                               n_compute_nodes, cluster_theme,
+                               os_key_name, head_user_script,
+                               ssh_keys, cores)
+    # except:
+    #     raise RuntimeError("Failed to create headnode, bailing . . .")
+
     try:
-        headnode = client.servers.create("torque-headnode-{0}".format(cluster_id),
-                                         client.images.get(cluster_theme["head_image"]),
-                                         client.flavors.get(3),  # should be medium
-                                         userdata=headnode_user_data,
-                                         key_name=key_name,
-                                         security_groups=["default"])
+        launch_compute_nodes(client, clientinfo, cluster_id,
+                             n_compute_nodes, cluster_theme,
+                             os_key_name, head_user_script,
+                             ssh_keys, node_flavor)
     except:
-        raise RuntimeError("Failed to create headnode, bailing . . .")
-
-    # make compute node user data
-    compute_node_user_data = get_user_data(_get_package_script("torque-node.sh"),
-                                           {"username": clientinfo["username"],
-                                            "node_script": COMPUTE_NODE_SCRIPT,
-                                            "pdc": "false",
-                                            "cluster_id": cluster_id,
-                                            "user_script": compute_user_script,
-                                            "public_key": public_key,
-                                            "private_key": private_key})
-
-
-    # launch the compute nodes
-    try:
-        client.servers.create("torque-node-{0}".format(cluster_id),
-                              client.images.get(cluster_theme["head_image"]),
-                              client.flavors.get(node_flavor),
-                              userdata=compute_node_user_data,
-                              min_count=n_compute_nodes,
-                              max_count=n_compute_nodes,
-                              key_name=key_name,
-                              security_groups=["default"])
-    # compute nodes failed, kill the headnode
-    except:
+        # compute nodes failed, kill the headnode
         client.servers.delete(headnode)
         raise RuntimeError("Failed to create comupte nodes, bailing . . .")
 
@@ -155,12 +181,9 @@ def cluster_launch(clientinfo, n_compute_nodes, cluster_theme,
                        clientinfo["auth_url"],
                        service_type="compute")
 
-    # generate cluster_id
-    rand_base = "0000000%s" % random.randrange(sys.maxint)
-    date = datetime.datetime.now()
-    cluster_id = "%s-%s" % (rand_base[-8:], date.strftime("%m-%d-%y"))
-
     cores = get_cores(client, node_flavor)
+
+    cluster_id = generate_id()
 
     # launch the instances
     launch_instances(client, clientinfo, cluster_id, n_compute_nodes, cores,
