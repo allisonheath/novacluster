@@ -15,7 +15,10 @@ CLOUD_MAP = {"http://cloud-controller:5000/v2.0/": "pdc",
 
 
 def _get_cluster_theme(cloud, theme_name):
-    themes = yaml.load(open(BUILTIN_THEMES))
+    # base loader is necessary so that it doesn't try to convert things
+    # to Python types; which is problematic when comparing to the results
+    # returned from the Nova API
+    themes = yaml.load(open(BUILTIN_THEMES), Loader=yaml.BaseLoader)
     theme = themes[cloud].get(theme_name)
     if theme is None:
         raise KeyError("Theme name not recognized")

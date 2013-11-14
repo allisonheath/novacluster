@@ -58,6 +58,33 @@ def _get_cluster_theme_scripts(theme):
     return base64.b64encode(head_script), base64.b64encode(compute_script)
 
 
+def dict_subset(d1, d2):
+    """Return true if d2 is contained within d1."""
+    if type(d1) is not dict or type(d2) is not dict:
+        return False
+    res = []
+    for key, val in d2.items():
+        if key in d1.keys():
+            if type(val) is dict:
+                res.append(dict_subset(d1[key], val))
+            elif val != d1[key]:
+                return False
+        else:
+            return False
+    return all(res)
+
+
+def _find_image(client, spec):
+    """Return the first image that matches the restrictions
+    specified by the dictionary."""
+    images = client.images.list()
+    for image in images:
+        if dict_subset(image.__dict__, spec):
+            return image
+    raise RuntimeError("No image matches this specification, "
+                       "make sure the theme is set up correctly.")
+
+
 def _run_ssh_on_string(command, string):
     temp = tempfile.NamedTemporaryFile(delete=False)
     temp.write(string)
@@ -113,7 +140,7 @@ def launch_headnode(cloud, client, clientinfo, cluster_id, n_compute_nodes,
 
     return client.servers.create(
         "torque-headnode-{0}".format(cluster_id),
-        client.images.get(cluster_theme["head_image"]),
+        _find_image(client, cluster_theme["head"]),
         client.flavors.get(3),  # should be medium
         userdata=headnode_user_data,
         key_name=os_key_name,
@@ -137,7 +164,7 @@ def launch_compute_nodes(cloud, client, clientinfo, cluster_id,
     # launch the compute nodes
     return client.servers.create(
         "torque-node-{0}".format(cluster_id),
-        client.images.get(cluster_theme["compute_image"]),
+        _find_image(client, cluster_theme["compute"]),
         client.flavors.get(node_flavor),
         userdata=compute_node_user_data,
         min_count=n_compute_nodes,
