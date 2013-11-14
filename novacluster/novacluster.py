@@ -146,6 +146,16 @@ def launch_compute_nodes(cloud, client, clientinfo, cluster_id,
         security_groups=["default"])
 
 
+def _make_novaclient(clientinfo):
+    """Create an OpenStack nova client object."""
+    return nc.Client(VERSION,
+                     clientinfo["username"],
+                     clientinfo["password"],
+                     clientinfo["tenant_name"],
+                     clientinfo["auth_url"],
+                     service_type="compute")
+
+
 def cluster_launch(cloud, clientinfo, n_compute_nodes, cluster_theme,
                    node_flavor, os_key_name=None, cluster_id=None,
                    logger=None):
@@ -157,12 +167,7 @@ def cluster_launch(cloud, clientinfo, n_compute_nodes, cluster_theme,
     logger.log("connecting to OpenStack API . . .")
 
     # make a new novaclient
-    client = nc.Client(VERSION,
-                       clientinfo["username"],
-                       clientinfo["password"],
-                       clientinfo["tenant_name"],
-                       clientinfo["auth_url"],
-                       service_type="compute")
+    client = _make_novaclient(clientinfo)
 
     cores = _get_cores(client, node_flavor)
 
