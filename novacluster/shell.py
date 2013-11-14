@@ -30,24 +30,39 @@ def _get_from_env(key):
     except:
         raise KeyError("Environment not configured properly.")
 
+
 # ye olde argparse incantations
 parser = argparse.ArgumentParser(description="wrapper around novaclient for"
                                  "launching clusters of OSDC systems.")
+parser.add_argument("--quiet", "-q", action="store_true",
+                    help="Run without logging.")
 
-subparsers = parser.add_subparsers(help='subcommand should be one of [launch, delete]',
+subparsers = parser.add_subparsers(help='subcommand should be one of '
+                                   '[launch, delete]',
                                    dest="subcommand")
 
 launch_parser = subparsers.add_parser("launch", help="launch a new cluster")
 launch_parser.add_argument("number", type=int, help="number of compute nodes")
 launch_parser.add_argument("--key", type=str,
-                           help="location of the ssh key"
+                           help="location of the ssh key "
                                 "to use for this cluster")
 launch_parser.add_argument("--flavor", type=int,
-                           help="the flavor ID to use for"
+                           help="the flavor ID to use for "
                                 "the compute nodes")
 launch_parser.add_argument("--theme", type=str,
-                           help="name of a cluster theme"
+                           help="name of a cluster theme "
                            "to use for this cluster.")
+launch_parser.add_argument("--id", type=str,
+                           help="the id to use for this cluster. "
+                           "if none is passed, one will be generated"
+                           "for you.")
+
+
+# little logger class, just prints to stdout
+class PrintLogger(object):
+    def log(self, string):
+        print string
+
 
 def main():
     args = parser.parse_args()
@@ -62,9 +77,9 @@ def main():
     # determine cloud and cluster theme
     cloud = CLOUD_MAP.get(clientinfo["auth_url"])
     if cloud is None:
-        raise RuntimeError("Your environments Openstack Auth URL"
-                           "is not known to correspond to any OSDC"
-                           "system. Please make sure your environment"
+        raise RuntimeError("Your environments Openstack Auth URL "
+                           "is not known to correspond to any OSDC "
+                           "system. Please make sure your environment "
                            "is configured correctly.")
 
     if args.theme is None:
@@ -74,5 +89,7 @@ def main():
 
     # for now just try to launch a cluster
     if args.subcommand == "launch":
-        nc.cluster_launch(clientinfo, args.number, cluster_theme,
-                          args.flavor, key_name=args.key)
+        nc.cluster_launch(cloud, clientinfo, args.number, cluster_theme,
+                          args.flavor, os_key_name=args.key,
+                          cluster_id=args.id,
+                          logger=PrintLogger() if not args.quiet else None)

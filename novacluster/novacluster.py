@@ -16,6 +16,12 @@ COMPUTE_NODE_SCRIPT = "/cloudconf/torque/tukey_node.sh"
 SSH_KEYGEN_COMMAND = "ssh-keygen"
 
 
+# the default logger; doesn't do anything
+class NoLogger(object):
+    def log(self, string):
+        pass
+
+
 def _get_user_data(file_path, format_dict):
     ''' Read file and format with format_dict'''
     with open(file_path) as script:
@@ -83,11 +89,11 @@ def _generate_keypair(password=None):
     dsa.save_pub_key_bio(mem_pub)
 
     public_key = _run_ssh_on_string(SSH_KEYGEN_COMMAND + " -f %s -i -m PKCS8",
-                                   mem_pub.getvalue())[:-1]
+                                    mem_pub.getvalue())[:-1]
     return {"public": public_key, "private": private_key}
 
 
-def launch_headnode(client, clientinfo, cluster_id, n_compute_nodes,
+def launch_headnode(cloud, client, clientinfo, cluster_id, n_compute_nodes,
                     cluster_theme, os_key_name, user_script, ssh_keys, cores):
     # make headnode user data
     headnode_user_data = _get_user_data(
@@ -99,7 +105,7 @@ def launch_headnode(client, clientinfo, cluster_id, n_compute_nodes,
          "cluster_id": cluster_id, "nodes": n_compute_nodes,
          "compute_url": client.client.management_url,
          "headnode_script": HEADNODE_SCRIPT,
-         "pdc": "False",  # presumably this can be determined from the authurl?
+         "pdc": "True" if cloud == "pdc" else "False",
          "cores": cores,
          "user_script": user_script,
          "public_key": ssh_keys["public"],
@@ -114,15 +120,15 @@ def launch_headnode(client, clientinfo, cluster_id, n_compute_nodes,
         security_groups=["default"])
 
 
-def launch_compute_nodes(client, clientinfo, cluster_id, n_compute_nodes,
-                         cluster_theme, os_key_name, user_script, ssh_keys,
-                         node_flavor):
+def launch_compute_nodes(cloud, client, clientinfo, cluster_id,
+                         n_compute_nodes, cluster_theme, os_key_name,
+                         user_script, ssh_keys, node_flavor):
     # make compute node user data
     compute_node_user_data = _get_user_data(
         _get_package_script("torque-node.sh"),
         {"username": clientinfo["username"],
          "node_script": COMPUTE_NODE_SCRIPT,
-         "pdc": "false",
+         "pdc": "true" if cloud == "pdc" else "false",
          "cluster_id": cluster_id,
          "user_script": user_script,
          "public_key": ssh_keys["public"],
@@ -131,7 +137,7 @@ def launch_compute_nodes(client, clientinfo, cluster_id, n_compute_nodes,
     # launch the compute nodes
     return client.servers.create(
         "torque-node-{0}".format(cluster_id),
-        client.images.get(cluster_theme["head_image"]),
+        client.images.get(cluster_theme["compute_image"]),
         client.flavors.get(node_flavor),
         userdata=compute_node_user_data,
         min_count=n_compute_nodes,
@@ -140,38 +146,15 @@ def launch_compute_nodes(client, clientinfo, cluster_id, n_compute_nodes,
         security_groups=["default"])
 
 
-def launch_instances(client, clientinfo, cluster_id, n_compute_nodes, cores,
-                     cluster_theme, node_flavor, os_key_name):
-    """Launch medium headnode and compute nodes for a new cluster"""
-
-    head_user_script, compute_user_script = _get_cluster_theme_scripts(cluster_theme)
-    ssh_keys = _generate_keypair()
-    # launch the headnode
-    try:
-        headnode = launch_headnode(client, clientinfo, cluster_id,
-                                   n_compute_nodes, cluster_theme,
-                                   os_key_name, head_user_script,
-                                   ssh_keys, cores)
-    except:
-        raise RuntimeError("Failed to create headnode, bailing . . .")
-
-    try:
-        launch_compute_nodes(client, clientinfo, cluster_id,
-                             n_compute_nodes, cluster_theme,
-                             os_key_name, head_user_script,
-                             ssh_keys, node_flavor)
-    except:
-        # compute nodes failed, kill the headnode
-        client.servers.delete(headnode)
-        raise RuntimeError("Failed to create comupte nodes, bailing . . .")
-
-    # it worked!
-    return
-
-
-def cluster_launch(clientinfo, n_compute_nodes, cluster_theme,
-                   node_flavor, key_name=None):
+def cluster_launch(cloud, clientinfo, n_compute_nodes, cluster_theme,
+                   node_flavor, os_key_name=None, cluster_id=None,
+                   logger=None):
     """Launch a new cluster."""
+
+    if logger is None:
+        logger = NoLogger()  # a logger that simpley doesn't do anything
+
+    logger.log("connecting to OpenStack API . . .")
 
     # make a new novaclient
     client = nc.Client(VERSION,
@@ -183,8 +166,41 @@ def cluster_launch(clientinfo, n_compute_nodes, cluster_theme,
 
     cores = _get_cores(client, node_flavor)
 
-    cluster_id = _generate_id()
+    # if we weren't passed an id, generate one
+    if cluster_id is None:
+        cluster_id = _generate_id()
 
-    # launch the instances
-    launch_instances(client, clientinfo, cluster_id, n_compute_nodes, cores,
-                     cluster_theme, node_flavor, key_name)
+    logger.log("Launching new cluster with id {0} and"
+               " {1} compute nodes.".format(cluster_id, n_compute_nodes))
+
+    # get the user's scripts for embedding
+    head_script, compute_script = _get_cluster_theme_scripts(cluster_theme)
+
+    # generate keypair for sullivan
+    ssh_keys = _generate_keypair()
+
+    # launch the headnode
+    logger.log("Launching headnode . . .")
+    try:
+        headnode = launch_headnode(cloud, client, clientinfo,
+                                   cluster_id, n_compute_nodes,
+                                   cluster_theme, os_key_name,
+                                   head_script, ssh_keys, cores)
+    except:
+        raise RuntimeError("Failed to create headnode, bailing . . .")
+
+    logger.log("Launching compute nodes . . .")
+    try:
+        launch_compute_nodes(cloud, client, clientinfo, cluster_id,
+                             n_compute_nodes, cluster_theme,
+                             os_key_name, compute_script, ssh_keys,
+                             node_flavor)
+    except:
+        # compute nodes failed, kill the headnode
+        client.servers.delete(headnode)
+        raise RuntimeError("Failed to create compute nodes,"
+                           "killing headnode and bailing . . .")
+
+    # it worked!
+    logger.log("Cluster launched successfully.")
+    return headnode
