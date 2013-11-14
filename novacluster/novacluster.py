@@ -209,3 +209,23 @@ def cluster_launch(cloud, clientinfo, n_compute_nodes, cluster_theme,
     # it worked!
     logger.log("Cluster launched successfully.")
     return headnode
+
+
+def list_clusters(cloud, clientinfo, logger=NoLogger()):
+    """Return a list of ids of the user's clusters."""
+
+    logger.log("connecting to OpenStack API . . .")
+
+    # make a client
+    client = _make_novaclient(clientinfo)
+
+    logger.log("Retrieving cluster info . . .")
+
+    # best list comprehension ever
+    names = [server.name.replace("torque-headnode-", "")
+             for server in client.servers.list()
+             if "torque-headnode-" in server.name]
+
+    # TODO: include some information about each cluster, e.g. # compute nodes
+
+    return names

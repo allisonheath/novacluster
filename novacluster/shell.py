@@ -57,6 +57,7 @@ launch_parser.add_argument("--id", type=str,
                            "if none is passed, one will be generated"
                            "for you.")
 
+list_parser = subparsers.add_parser("list", help="list all clusters.")
 
 # little logger class, just prints to stdout
 class PrintLogger(object):
@@ -82,14 +83,22 @@ def main():
                            "system. Please make sure your environment "
                            "is configured correctly.")
 
-    if args.theme is None:
-        cluster_theme = _get_cluster_theme(cloud, "default")
-    else:
-        cluster_theme = _get_cluster_theme(cloud, args.theme)
+    logger=PrintLogger() if not args.quiet else None
 
-    # for now just try to launch a cluster
     if args.subcommand == "launch":
+
+        # get a dictionary of theme information
+        if args.theme is None:
+            cluster_theme = _get_cluster_theme(cloud, "default")
+        else:
+            cluster_theme = _get_cluster_theme(cloud, args.theme)
+
+        # launch the cluster
         nc.cluster_launch(cloud, clientinfo, args.number, cluster_theme,
                           args.flavor, os_key_name=args.key,
                           cluster_id=args.id,
-                          logger=PrintLogger() if not args.quiet else None)
+                          logger=logger)
+
+    elif args.subcommand == "list":
+        for cluster_id in nc.list_clusters(cloud, clientinfo, logger=logger):
+            print cluster_id
