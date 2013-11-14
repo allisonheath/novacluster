@@ -59,6 +59,10 @@ launch_parser.add_argument("--id", type=str,
 
 list_parser = subparsers.add_parser("list", help="list all clusters.")
 
+delete_parser = subparsers.add_parser("delete", help="delete a clusters.")
+delete_parser.add_argument("cluster_id", type=str,
+                           help="The id of the cluster to be deleted.")
+
 # little logger class, just prints to stdout
 class PrintLogger(object):
     def log(self, string):
@@ -78,12 +82,12 @@ def main():
     # determine cloud and cluster theme
     cloud = CLOUD_MAP.get(clientinfo["auth_url"])
     if cloud is None:
-        raise RuntimeError("Your environments Openstack Auth URL "
+        raise RuntimeError("Your environment's Openstack Auth URL "
                            "is not known to correspond to any OSDC "
                            "system. Please make sure your environment "
                            "is configured correctly.")
 
-    logger=PrintLogger() if not args.quiet else None
+    logger = PrintLogger() if not args.quiet else None
 
     if args.subcommand == "launch":
 
@@ -100,5 +104,8 @@ def main():
                           logger=logger)
 
     elif args.subcommand == "list":
-        for cluster_id in nc.list_clusters(cloud, clientinfo, logger=logger):
+        for cluster_id in nc.list_clusters(clientinfo, logger=logger):
             print cluster_id
+
+    elif args.subcommand == "delete":
+        nc.delete_cluster(clientinfo, args.cluster_id, logger=logger)

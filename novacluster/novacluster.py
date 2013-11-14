@@ -211,8 +211,11 @@ def cluster_launch(cloud, clientinfo, n_compute_nodes, cluster_theme,
     return headnode
 
 
-def list_clusters(cloud, clientinfo, logger=NoLogger()):
+def list_clusters(clientinfo, logger=None):
     """Return a list of ids of the user's clusters."""
+
+    if logger is None:
+        logger = NoLogger()  # a logger that simpley doesn't do anything
 
     logger.log("connecting to OpenStack API . . .")
 
@@ -221,7 +224,7 @@ def list_clusters(cloud, clientinfo, logger=NoLogger()):
 
     logger.log("Retrieving cluster info . . .")
 
-    # best list comprehension ever
+    # get the id of each cluster
     names = [server.name.replace("torque-headnode-", "")
              for server in client.servers.list()
              if "torque-headnode-" in server.name]
@@ -229,3 +232,29 @@ def list_clusters(cloud, clientinfo, logger=NoLogger()):
     # TODO: include some information about each cluster, e.g. # compute nodes
 
     return names
+
+
+def delete_cluster(clientinfo, cluster_id, logger=None):
+    """Delete the cluster with a given id."""
+
+    if logger is None:
+        logger = NoLogger()  # a logger that simpley doesn't do anything
+
+    logger.log("connecting to OpenStack API . . .")
+
+    # make a client
+    client = _make_novaclient(clientinfo)
+
+    logger.log("Deleting cluster . . .")
+
+    # figure out which nodes to delete
+    nodes = [server for server in client.servers.list()
+             if cluster_id in server.name]
+
+    # send delete requests
+    for node in nodes:
+        client.servers.delete(node)
+
+    logger.log("Cluster deleted successfully.")
+
+    return
