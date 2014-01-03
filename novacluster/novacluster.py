@@ -189,18 +189,28 @@ def cluster_launch(cloud, clientinfo, n_compute_nodes, cluster_theme,
     """Launch a new cluster."""
 
     if logger is None:
-        logger = NoLogger()  # a logger that simpley doesn't do anything
-
+        logger = NoLogger()
     logger.log("connecting to OpenStack API . . .")
 
     # make a new novaclient
     client = _make_novaclient(clientinfo)
 
-    cores = _get_cores(client, node_flavor)
-
     # if we weren't passed an id, generate one
     if cluster_id is None:
         cluster_id = _generate_id()
+
+    if node_flavor is None:
+        node_flavor = 3  # use medium as a default
+
+    cores = _get_cores(client, node_flavor)
+
+    if os_key_name is None:
+        try:
+            os_key_name = client.keypairs.list()[0].name
+        except IndexError:
+            raise RuntimeError("No keypairs found; ensure"
+                               "that you have uploaded a keypair"
+                               "to the OpenStack API.")
 
     logger.log("Launching new cluster with id {0} and"
                " {1} compute nodes.".format(cluster_id, n_compute_nodes))
