@@ -3,8 +3,11 @@ sullivan:
     compute: {id: a0b3f4fd-6b26-42f0-ba9c-aa51ba365fe1}
     head: {id: 43ad2a59-83bb-45c9-87e7-910f924f1ca7}
   bcbio:
-    head: {metadata: {bcbio-head: true}}
-    compute: {metadata: {bcbio-compute: true}}
+    head: {metadata: {bcbio-prod: True}}
+    compute: {metadata: {bcbio-prod: True}}
+  bcbio-staging:
+    head: {metadata: {bcbio-staging: True}}
+    compute: {metadata: {bcbio-staging: True}}
 pdc:
   default:
     compute: {id: b6ae416d-b822-4d3b-81cd-da8aeff5500a}
