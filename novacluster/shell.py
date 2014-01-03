@@ -19,6 +19,9 @@ def _get_cluster_theme(cloud, theme_name):
     # to Python types; which is problematic when comparing to the results
     # returned from the Nova API
     themes = yaml.load(open(BUILTIN_THEMES), Loader=yaml.BaseLoader)
+    user_themes_filename = os.path.expanduser("~/.novacluster_themes")
+    if os.path.exists(user_themes_filename):
+        themes.update(yaml.load(open(user_themes_filename)))
     theme = themes[cloud].get(theme_name)
     if theme is None:
         raise KeyError("Theme name not recognized")
