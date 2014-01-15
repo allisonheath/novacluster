@@ -229,7 +229,7 @@ def cluster_launch(cloud, clientinfo, n_compute_nodes, cluster_theme,
                                    cluster_theme, os_key_name,
                                    head_script, ssh_keys, cores)
     except:
-        raise RuntimeError("Failed to create headnode, bailing . . .")
+        raise #RuntimeError("Failed to create headnode, bailing . . .")
 
     logger.log("Launching compute nodes . . .")
     try:

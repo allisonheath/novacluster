@@ -1,0 +1,6 @@
+X - Logging
+X - Arbitrary IDs on clusters
+X - Delete subcommand
+X - smarter selection of images in themes
+X - user themes (.novacluster_themes?)
+X? - make pdc work

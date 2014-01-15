@@ -21,8 +21,8 @@ $ python setup.py install
 
 Novacluster is similar to the
 [python-novaclient](https://github.com/openstack/python-novaclient)
-command line tool, but is used for managing TORQUE clusters rather
-than individual machines. It require the same environment variables to
+command line tool, but is used for managing entire TORQUE clusters rather
+than individual machines. It requires the same environment variables to
 be set as the `nova` command line tool. To set these up properly, please
 see the Console > Settings > OpenStack API page of the could you are using.
 
