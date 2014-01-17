@@ -236,16 +236,30 @@ def cluster_launch(cloud, clientinfo, n_compute_nodes, cluster_theme,
     # for them, so we have to block until they are done
 
     logger.log("Waiting for compute nodes to build . . .")
+    sent_delete_request = False
     while 1:
         nodes = [server for server in client.servers.list()
                  if "torque-node-"+cluster_id in server.name]
-        num_active = sum([node.status == "ACTIVE" for node in nodes])
-        # we can't just ask for ACTIVE nodes because some might error
-        if all([nodes.states != "BUILD" for node in nodes]):
-            logger.log("Launched {0} compute nodes total, lauching headnode".format(num_active))
+        active = [node for node in nodes if node.status == "ACTIVE"]
+        error = [node for node in nodes if node.status == "ERROR"]
+        build = [node for node in nodes if node.status == "BUILD"]
+        deleting = [node for node in nodes if node.status == "DELETING"]
+        if len(active) == len(nodes):
+            logger.log("{0} compute nodes built, launching headnode".format(len(active)))
             break
-        else:
-            logger.log("Launched {0} compute nodes . . .".format(num_active))
+        elif len(build) > 0:
+            logger.log("Built {0} compute nodes so far, waiting . . .".format(len(active)))
+            time.sleep(5)
+        elif len(build) == 0 and len(error) > 0:
+            logger.log("{0} compute nodes errored, deleting them and relaunching".format(len(error)))
+            for node in error:
+                client.servers.delete(node)
+            time.sleep(2)
+            # try to relaunch
+            launch_compute_nodes(cloud, client, clientinfo, cluster_id,
+                                 len(error), cluster_theme,
+                                 os_key_name, compute_script, ssh_keys,
+                                 node_flavor)
             time.sleep(5)
 
     # launch the headnode
