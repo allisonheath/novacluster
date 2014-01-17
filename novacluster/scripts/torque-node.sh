@@ -41,7 +41,7 @@ fi
 # run node scripts
 sudo %(node_script)s
 
-echo "node script" > /tmp/worked
+echo "node script" >> /tmp/worked
 
 # run custom user script
 user_script=`echo "%(user_script)s" | base64 --decode`
@@ -52,4 +52,4 @@ then
     sudo /tmp/user_script
 fi
 
-echo "user script" > /tmp/worked
+echo "user script" >> /tmp/worked

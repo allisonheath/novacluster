@@ -19,7 +19,7 @@ if False and getpass.getuser() != username:
     sys.exit(1)
 
 # wait for torque dir
-while not os.path.exists("/cloudconf/torque/setup_scripts"):
+while not os.path.exists("%(headnode_script)s"):
     time.wait(1)
 
 req = urllib2.Request(compute_url + "/servers/detail",headers={"x-auth-project-d": username, "x-auth-token": auth_token})
@@ -46,7 +46,8 @@ if not %(pdc)s:
     os.system("chmod 600 /home/ubuntu/.ssh/id_dsa")
 
 # run headnode script
-os.system(" ".join(["sudo", "%(headnode_script)s", cluster_id, ips, "%(cores)s"]))
+os.system(" ".join(["sudo", "%(headnode_script)s",
+                    cluster_id, ips, "%(cores)s", "%(username)s"]))
 
 os.system("echo headnode script > /tmp/worked")
 
