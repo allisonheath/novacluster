@@ -11,8 +11,10 @@ from subprocess import Popen, PIPE
 # Openstack nova client version
 VERSION = "1.1"
 # locations of scripts to be run during cluster startup
-HEADNODE_SCRIPT = "/cloudconf/torque/tukey_headnode.sh"
-COMPUTE_NODE_SCRIPT = "/cloudconf/torque/tukey_node.sh"
+HEADNODE_SCRIPT = {"sullivan": "/glusterfs/users/jporter/torque/tukey_headnode.sh",
+                   "pdc": "/glusterfs/users/torque_nodes/headnode/tukey_headnode.sh"}
+COMPUTE_NODE_SCRIPT = {"sullivan": "/cloudconf/torque/tukey_node.sh",
+                       "pdc": "/glusterfs/users/torque_nodes/headnode/tukey_node.sh"}
 SSH_KEYGEN_COMMAND = "ssh-keygen"
 
 
@@ -154,7 +156,7 @@ def launch_compute_nodes(cloud, client, clientinfo, cluster_id,
     compute_node_user_data = _get_user_data(
         _get_package_script("torque-node.sh"),
         {"username": clientinfo["username"],
-         "node_script": COMPUTE_NODE_SCRIPT,
+         "node_script": COMPUTE_NODE_SCRIPT[cloud],
          "pdc": "true" if cloud == "pdc" else "false",
          "cluster_id": cluster_id,
          "user_script": user_script,
