@@ -38,7 +38,11 @@ then
     chmod 600 /home/ubuntu/.ssh/id_dsa
 fi
 
-# run node scripts
+while ! ping -c 1 torque-headnode-$CLUSTER_ID
+do
+    sleep 1
+done
+
 sudo %(node_script)s
 
 echo "node script" >> /tmp/worked
