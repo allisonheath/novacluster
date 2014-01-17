@@ -221,6 +221,15 @@ def cluster_launch(cloud, clientinfo, n_compute_nodes, cluster_theme,
     # generate keypair for sullivan
     ssh_keys = _generate_keypair()
 
+    logger.log("Launching compute nodes . . .")
+    try:
+        nodes = launch_compute_nodes(cloud, client, clientinfo, cluster_id,
+                                     n_compute_nodes, cluster_theme,
+                                     os_key_name, compute_script, ssh_keys,
+                                     node_flavor)
+    except:
+        raise
+
     # launch the headnode
     logger.log("Launching headnode . . .")
     try:
@@ -229,20 +238,10 @@ def cluster_launch(cloud, clientinfo, n_compute_nodes, cluster_theme,
                                    cluster_theme, os_key_name,
                                    head_script, ssh_keys, cores)
     except:
+        # headnode failed, make sure we clean up compute nodes
+        client.servers.delete(nodes)
         raise
 
-    logger.log("Launching compute nodes . . .")
-    try:
-        launch_compute_nodes(cloud, client, clientinfo, cluster_id,
-                             n_compute_nodes, cluster_theme,
-                             os_key_name, compute_script, ssh_keys,
-                             node_flavor)
-    except:
-        # compute nodes failed, kill the headnode
-        client.servers.delete(headnode)
-        raise
-
-    # it worked!
     logger.log("Cluster launched successfully.")
     return headnode
 
