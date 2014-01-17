@@ -18,8 +18,13 @@ setup(
         "Topic :: Utilities",
     ],
     packages=["novacluster"],
-    package_data={"novacluster":["*.yaml","scripts/*"]},
+    package_data={"novacluster": ["*.yaml", "scripts/*"]},
     entry_points={
         'console_scripts': ['novacluster=novacluster.shell:main']
-    }
+    },
+    install_requires=[
+        'python-novaclient==2012.1',
+        'pyyaml',
+        'M2Crypto'
+    ]
 )
