@@ -22,9 +22,9 @@ def _get_cluster_theme(cloud, theme_name):
     user_themes_filename = os.path.expanduser("~/.novacluster_themes")
     if os.path.exists(user_themes_filename):
         user_themes = yaml.load(open(user_themes_filename))
-        if user_themes is not None:
-            themes.update(user_themes)
     theme = themes[cloud].get(theme_name)
+    if theme is None and cloud in user_themes.keys():
+        theme = user_themes[cloud].get(theme_name)
     if theme is None:
         raise KeyError("Theme name not recognized")
     return theme
