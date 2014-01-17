@@ -10,5 +10,5 @@ sullivan:
     compute: {metadata: {bcbio_staging: True}}
 pdc:
   default:
-    compute: {id: b6ae416d-b822-4d3b-81cd-da8aeff5500a}
-    head: {id: 8beb7a8e-148e-444c-9a37-115686a3a9d7}
+    compute: {id: 8beb7a8e-148e-444c-9a37-115686a3a9d7}
+    head: {id: b2628002-fb35-4519-baf7-803c0b4f2e6e}
