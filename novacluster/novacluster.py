@@ -286,7 +286,8 @@ def delete_cluster(clientinfo, cluster_id, logger=None):
 
     # figure out which nodes to delete
     nodes = [server for server in client.servers.list()
-             if cluster_id in server.name]
+             if "torque-node-"+cluster_id in server.name
+             or "torque-headnode-"+cluster_id in server.name]
 
     # send delete requests
     for node in nodes:
