@@ -210,9 +210,7 @@ def cluster_launch(cloud, clientinfo, n_compute_nodes, cluster_theme,
         try:
             os_key_name = client.keypairs.list()[0].name
         except IndexError:
-            raise RuntimeError("No keypairs found; ensure"
-                               "that you have uploaded a keypair"
-                               "to the OpenStack API.")
+            logger.log("WARNING: no keypairs found.")
 
     logger.log("Launching new cluster with id {0} and"
                " {1} compute nodes.".format(cluster_id, n_compute_nodes))
