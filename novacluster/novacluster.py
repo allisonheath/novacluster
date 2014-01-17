@@ -5,6 +5,7 @@ import datetime
 import os
 import tempfile
 import base64
+import time
 from M2Crypto import DSA, BIO
 from subprocess import Popen, PIPE
 
@@ -163,16 +164,27 @@ def launch_compute_nodes(cloud, client, clientinfo, cluster_id,
          "public_key": ssh_keys["public"],
          "private_key": ssh_keys["private"]})
 
-    # launch the compute nodes
-    return client.servers.create(
-        "torque-node-{0}".format(cluster_id),
-        _find_image(client, cluster_theme["compute"]),
-        client.flavors.get(node_flavor),
-        userdata=compute_node_user_data,
-        min_count=n_compute_nodes,
-        max_count=n_compute_nodes,
-        key_name=os_key_name,
-        security_groups=["default"])
+    # this is to prevent the OpenStack DNS from being overwhelemed
+    # trying to launch too many instances at once
+    BATCH_SIZE = 10
+    while n_compute_nodes > 0:
+        to_launch = BATCH_SIZE if n_compute_nodes > BATCH_SIZE else n_compute_nodes
+        client.servers.create(
+            "torque-node-{0}".format(cluster_id),
+            _find_image(client, cluster_theme["compute"]),
+            client.flavors.get(node_flavor),
+            userdata=compute_node_user_data,
+            min_count=to_launch,
+            max_count=to_launch,
+            key_name=os_key_name,
+            security_groups=["default"])
+        n_compute_nodes -= to_launch
+        print "launched {0} nodes, waiting 30 seconds . . .".format(to_launch)
+        time.sleep(30)
+
+
+
+
 
 
 def _make_novaclient(clientinfo):
