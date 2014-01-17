@@ -5,6 +5,7 @@ import datetime
 import os
 import tempfile
 import base64
+import time
 from M2Crypto import DSA, BIO
 from subprocess import Popen, PIPE
 
@@ -229,6 +230,23 @@ def cluster_launch(cloud, clientinfo, n_compute_nodes, cluster_theme,
                                      node_flavor)
     except:
         raise
+
+    # if we launch the headnode before the compute nodes are done
+    # building, it might not catching all their IPs when it queries
+    # for them, so we have to block until they are done
+
+    logger.log("Waiting for compute nodes to build . . .")
+    while 1:
+        nodes = [server for server in client.servers.list()
+                 if "torque-node-"+cluster_id in server.name]
+        num_active = sum([node.status == "ACTIVE" for node in nodes])
+        # we can't just ask for ACTIVE nodes because some might error
+        if all([nodes.states != "BUILD" for node in nodes]):
+            logger.log("Launched {0} compute nodes total, lauching headnode".format(num_active))
+            break
+        else:
+            logger.log("Launched {0} compute nodes . . .".format(num_active))
+            time.sleep(5)
 
     # launch the headnode
     logger.log("Launching headnode . . .")
