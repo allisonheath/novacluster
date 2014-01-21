@@ -59,7 +59,7 @@ bash -c '
 user_script=`echo "%(user_script)s" | base64 --decode`
 if [[ $user_script != None ]]
 then
-    echo $user_script > /tmp/user_script
+    echo "$user_script" > /tmp/user_script
     sudo chmod a+x /tmp/user_script
     sudo /tmp/user_script
 fi'
