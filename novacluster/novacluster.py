@@ -12,7 +12,7 @@ from subprocess import Popen, PIPE
 # Openstack nova client version
 VERSION = "1.1"
 # locations of scripts to be run during cluster startup
-HEADNODE_SCRIPTS = {"sullivan": "/cloudconf/torque/tukey_node.sh",
+HEADNODE_SCRIPTS = {"sullivan": "/cloudconf/torque/tukey_headnode.sh",
                     "pdc": "/glusterfs/users/torque_nodes/headnode/tukey_headnode.sh"}
 COMPUTE_NODE_SCRIPTS = {"sullivan": "/cloudconf/torque/tukey_node.sh",
                         "pdc": "/glusterfs/users/torque_nodes/headnode/tukey_node.sh"}

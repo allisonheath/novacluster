@@ -23,7 +23,8 @@ setup(
         'console_scripts': ['novacluster=novacluster.shell:main']
     },
     install_requires=[
-        'python-novaclient==2012.1',
+        'dnspython', #fixes TypeError: dist must be a Distribution instance
+        'python-novaclient',
         'pyyaml',
         'M2Crypto'
     ]
